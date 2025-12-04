@@ -6,11 +6,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # ===== 设置自定义参数 =====
-echo "===== 欧加真MT6991通用6.6.89 A15 OKI内核本地编译脚本 By Coolapk@liyu ====="
+echo "===== 欧加真MT6991通用6.6.89 A15 OKI内核本地编译脚本 By liyu ====="
 echo ">>> 读取用户配置..."
 MANIFEST=${MANIFEST:-oppo+oplus+realme}
-read -p "请输入自定义内核后缀（默认：android15-8-g29d86c5fc9dd-abogki428889875-4k）: " CUSTOM_SUFFIX
-CUSTOM_SUFFIX=${CUSTOM_SUFFIX:-android15-8-g29d86c5fc9dd-abogki428889875-4k}
+read -p "请输入自定义内核后缀（默认：@liyu）: " CUSTOM_SUFFIX
+CUSTOM_SUFFIX=${CUSTOM_SUFFIX:-@liyu}
 read -p "是否启用susfs？(y/n，默认：y): " APPLY_SUSFS
 APPLY_SUSFS=${APPLY_SUSFS:-y}
 read -p "是否启用 KPM？(y/n，默认：n): " USE_PATCH_LINUX
@@ -86,7 +86,7 @@ echo ">>> 初始化仓库..."
 rm -rf kernel_workspace
 mkdir kernel_workspace
 cd kernel_workspace
-git clone --depth=1 https://github.com/cctv18/android_kernel_oneplus_mt6991 -b oneplus/mt6991_v_15.0.2_ace5_ultra_6.6.89 common
+git clone --depth=1 https://github.com/759492838/gki_cctv18 -b oneplus/mt6991_v_15.0.2_ace5_ultra_6.6.89 common
 echo ">>> 初始化仓库完成"
 
 # ===== 清除 abi 文件、去除 -dirty 后缀 =====
@@ -199,9 +199,9 @@ elif [[ "$KSU_BRANCH" == [mM] && "$APPLY_SUSFS" == [yY] ]]; then
   cd ./KernelSU
   patch -p1 < 10_enable_susfs_for_ksu.patch || true
   #为MKSU修正susfs 2.0.0补丁
-  wget https://github.com/cctv18/oppo_oplus_realme_sm8750/raw/refs/heads/main/other_patch/mksu_supercalls.patch
+  wget https://github.com/759492838/oppo_oplus_realme_sm8750/raw/refs/heads/main/other_patch/mksu_supercalls.patch
   patch -p1 < mksu_supercalls.patch || true
-  wget https://github.com/cctv18/oppo_oplus_realme_sm8750/raw/refs/heads/main/other_patch/fix_umount.patch
+  wget https://github.com/759492838/oppo_oplus_realme_sm8750/raw/refs/heads/main/other_patch/fix_umount.patch
   patch -p1 < fix_umount.patch || true
   cd ../common
   patch -p1 < 50_add_susfs_in_gki-android15-6.6.patch || true
@@ -235,7 +235,7 @@ elif [[ "$KSU_BRANCH" == [kK] && "$APPLY_SUSFS" == [yY] ]]; then
   cp ./SukiSU_patch/69_hide_stuff.patch ./common/
   cd ./KernelSU
   patch -p1 < 10_enable_susfs_for_ksu.patch || true
-  wget https://github.com/cctv18/oppo_oplus_realme_sm8750/raw/refs/heads/main/other_patch/fix_umount.patch
+  wget https://github.com/759492838/oppo_oplus_realme_sm8750/raw/refs/heads/main/other_patch/fix_umount.patch
   patch -p1 < fix_umount.patch || true
   cd ../common
   patch -p1 < 50_add_susfs_in_gki-android15-6.6.patch || true
@@ -250,7 +250,7 @@ cd ../
 # ===== 应用 LZ4 & ZSTD 补丁 =====
 if [[ "$APPLY_LZ4" == "y" || "$APPLY_LZ4" == "Y" ]]; then
   echo ">>> 正在添加lz4 1.10.0 & zstd 1.5.7补丁..."
-  git clone https://github.com/cctv18/oppo_oplus_realme_sm8750.git
+  git clone https://github.com/759492838/oppo_oplus_realme_sm8750.git
   cp ./oppo_oplus_realme_sm8750/zram_patch/001-lz4.patch ./common/
   cp ./oppo_oplus_realme_sm8750/zram_patch/001-lz4-clearMake.patch ./common/
   cp ./oppo_oplus_realme_sm8750/zram_patch/lz4armv8.S ./common/lib
@@ -360,7 +360,7 @@ if [[ "$APPLY_BETTERNET" == "y" || "$APPLY_BETTERNET" == "Y" ]]; then
   echo "CONFIG_IP6_NF_TARGET_MASQUERADE=y" >> "$DEFCONFIG_FILE"
   #由于部分机型的vintf兼容性检测规则，在开启CONFIG_IP6_NF_NAT后开机会出现"您的设备内部出现了问题。请联系您的设备制造商了解详情。"的提示，故添加一个配置修复补丁，在编译内核时隐藏CONFIG_IP6_NF_NAT=y但不影响对应功能编译
   cd common
-  wget https://github.com/cctv18/oppo_oplus_realme_sm8750/raw/refs/heads/main/other_patch/config.patch
+  wget https://github.com/759492838/oppo_oplus_realme_sm8750/raw/refs/heads/main/other_patch/config.patch
   patch -p1 -F 3 < config.patch || true
   cd ..
 fi
@@ -435,6 +435,9 @@ sed -i 's/check_defconfig//' ./common/build.config.gki
 # ===== 编译内核 =====
 echo ">>> 开始编译内核..."
 cd common
+# 设置编译者和构建者信息
+export KBUILD_BUILD_USER=liyu
+export KBUILD_BUILD_HOST=liyu
 make -j$(nproc --all) LLVM=-18 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnuabeihf- CC=clang LD=ld.lld HOSTCC=clang HOSTLD=ld.lld O=out KCFLAGS+=-O2 KCFLAGS+=-Wno-error gki_defconfig all
 echo ">>> 内核编译成功！"
 
@@ -456,7 +459,7 @@ fi
 # ===== 克隆并打包 AnyKernel3 =====
 cd "$WORKDIR/kernel_workspace"
 echo ">>> 克隆 AnyKernel3 项目..."
-git clone https://github.com/cctv18/AnyKernel3 --depth=1
+git clone https://github.com/759492838/AnyKernel3 --depth=1
 
 echo ">>> 清理 AnyKernel3 Git 信息..."
 rm -rf ./AnyKernel3/.git
@@ -469,7 +472,7 @@ cd "$WORKDIR/kernel_workspace/AnyKernel3"
 
 # ===== 如果启用 lz4kd，则下载 zram.zip 并放入当前目录 =====
 if [[ "$APPLY_LZ4KD" == "y" || "$APPLY_LZ4KD" == "Y" ]]; then
-  wget https://raw.githubusercontent.com/cctv18/oppo_oplus_realme_sm8750/refs/heads/main/zram.zip
+  wget https://raw.githubusercontent.com/759492838/oppo_oplus_realme_sm8750/refs/heads/main/zram.zip
 fi
 
 # ===== 生成 ZIP 文件名 =====
